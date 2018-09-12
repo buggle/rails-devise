@@ -7,6 +7,13 @@ Warden.test_mode!
 #   So I can see my personal account data
 feature 'User profile page', :devise do
 
+  let(:user) { FactoryBot.create(:user) }
+  let(:other) { FactoryBot.create(:user, email: 'other@example.com') }
+
+  before do
+    login_as(user, :scope => :user)
+  end
+
   after(:each) do
     Warden.test_reset!
   end
@@ -16,8 +23,6 @@ feature 'User profile page', :devise do
   #   When I visit the user profile page
   #   Then I see my own email address
   scenario 'user sees own profile' do
-    user = FactoryGirl.create(:user)
-    login_as(user, :scope => :user)
     visit user_path(user)
     expect(page).to have_content 'User'
     expect(page).to have_content user.email
@@ -28,11 +33,8 @@ feature 'User profile page', :devise do
   #   When I visit another user's profile
   #   Then I see an 'access denied' message
   scenario "user cannot see another user's profile" do
-    me = FactoryGirl.create(:user)
-    other = FactoryGirl.create(:user, email: 'other@example.com')
-    login_as(me, :scope => :user)
-    Capybara.current_session.driver.header 'Referer', root_path
     visit user_path(other)
+    expect( current_path ).to eq users_path
     expect(page).to have_content 'Access denied.'
   end
 
